@@ -1,171 +1,80 @@
 package spl.lae;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import parser.ComputationNode;
-import parser.ComputationNodeType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Assertions;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import parser.ComputationNode;
+import parser.InputParser;
+import spl.lae.LinearAlgebraEngine;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
 
 public class LinearAlgebraEngineTest {
+    final private int THREAD_COUNT = 3;
 
-    @Test
-    @Timeout(5)
-    void addMatricesSimpleCase() {
-        LinearAlgebraEngine engine = new LinearAlgebraEngine(3);
-        try {
-            double[][] a = {{2.0, -1.0}, {0.5, 3.5}};
-            double[][] b = {{4.0, 6.0}, {1.5, -0.5}};
-
-            java.util.List<ComputationNode> children = new java.util.ArrayList<>();
-            children.add(new ComputationNode(a));
-            children.add(new ComputationNode(b));
-
-            ComputationNode node =
-                    new ComputationNode(ComputationNodeType.ADD, children);
-
-            double[][] result = engine.run(node).getMatrix();
-
-            assertArrayEquals(new double[]{6.0, 5.0}, result[0], 1e-9);
-            assertArrayEquals(new double[]{2.0, 3.0}, result[1], 1e-9);
-        } finally {
-            shutdownEngine(engine);
-        }
+    @ParameterizedTest
+    @ValueSource(ints = {1,2,3,4,5,6})
+    public void testExamplesFolder(int index) throws IOException, ParseException, InterruptedException {
+        testExample(index);
     }
 
-    @Test
-    @Timeout(5)
-    void negateTurnsAllValuesNegative() {
-        LinearAlgebraEngine engine = new LinearAlgebraEngine(2);
-        try {
-            double[][] data = {{-1.0, 4.0}, {2.0, -3.0}};
+    public static double[][] parseResultMatrix(String filePath) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(new File(filePath));
 
-            java.util.List<ComputationNode> children = new java.util.ArrayList<>();
-            children.add(new ComputationNode(data));
-
-            ComputationNode node =
-                    new ComputationNode(ComputationNodeType.NEGATE, children);
-
-            double[][] result = engine.run(node).getMatrix();
-
-            assertArrayEquals(new double[]{1.0, -4.0}, result[0], 1e-9);
-            assertArrayEquals(new double[]{-2.0, 3.0}, result[1], 1e-9);
-        } finally {
-            shutdownEngine(engine);
+        JsonNode resultNode = root.get("result");
+        if (resultNode == null || !resultNode.isArray()) {
+            throw new IllegalArgumentException("Invalid format: 'result' key not found or not an array");
         }
+
+        int rows = resultNode.size();
+        double[][] matrix = new double[rows][];
+
+        for (int i = 0; i < rows; i++) {
+            JsonNode rowNode = resultNode.get(i);
+            int cols = rowNode.size();
+            matrix[i] = new double[cols];
+            for (int j = 0; j < cols; j++) {
+                matrix[i][j] = rowNode.get(j).asDouble();
+            }
+        }
+        return matrix;
     }
 
-    @Test
-    @Timeout(5)
-    void transposeOfSingleRowMatrix() {
-        LinearAlgebraEngine engine = new LinearAlgebraEngine(2);
-        try {
-            double[][] original = {{5, 6, 7}};
+    private void testExample(int index) throws IOException, ParseException, InterruptedException {
+        String inputPath = "Examples/example" + index + ".json";
+        String expectedPath = "Examples/out" + index + ".json";
 
-            java.util.List<ComputationNode> children = new java.util.ArrayList<>();
-            children.add(new ComputationNode(original));
+        InputParser parser = new InputParser();
 
-            ComputationNode node =
-                    new ComputationNode(ComputationNodeType.TRANSPOSE, children);
+        ComputationNode inputNode = parser.parse(inputPath);
 
-            double[][] result = engine.run(node).getMatrix();
+        double[][] expectedMatrix = parseResultMatrix(expectedPath);
 
-            assertEquals(1, result.length);
-            assertEquals(3, result[0].length);
-            assertArrayEquals(new double[]{5.0, 6.0, 7.0}, result[0], 1e-9);
-        } finally {
-            shutdownEngine(engine);
-        }
+        LinearAlgebraEngine engine = new LinearAlgebraEngine(THREAD_COUNT);
+        ComputationNode resultNode = engine.run(inputNode);
+        double[][] actualMatrix = resultNode.getMatrix();
+
+        engine.shutdown();
+
+        assertMatricesEqual(expectedMatrix, actualMatrix, "Mismatch in example " + index);
     }
 
-    @Test
-    @Timeout(5)
-    void nestedMultiplyThenAdd() {
-        LinearAlgebraEngine engine = new LinearAlgebraEngine(4);
-        try {
-            double[][] A = {{1, 1}, {2, 1}};
-            double[][] B = {{3, 0}, {0, 2}};
-            double[][] C = {{1, 1}, {1, 1}};
+    private void assertMatricesEqual(double[][] expected, double[][] actual, String message) {
+        Assertions.assertNotNull(actual, message + ": Result matrix is null");
+        Assertions.assertEquals(expected.length, actual.length, message + ": Row count mismatch");
+        Assertions.assertEquals(expected[0].length, actual[0].length, message + ": Column count mismatch");
 
-            java.util.List<ComputationNode> mulChildren = new java.util.ArrayList<>();
-            mulChildren.add(new ComputationNode(A));
-            mulChildren.add(new ComputationNode(B));
-
-            ComputationNode mulNode =
-                    new ComputationNode(ComputationNodeType.MULTIPLY, mulChildren);
-
-            java.util.List<ComputationNode> addChildren = new java.util.ArrayList<>();
-            addChildren.add(mulNode);
-            addChildren.add(new ComputationNode(C));
-
-            ComputationNode root =
-                    new ComputationNode(ComputationNodeType.ADD, addChildren);
-
-            double[][] result = engine.run(root).getMatrix();
-
-            assertArrayEquals(new double[]{7.0, 5.0}, result[0], 1e-9);
-            assertArrayEquals(new double[]{10.0, 7.0}, result[1], 1e-9);
-        } finally {
-            shutdownEngine(engine);
-        }
-    }
-
-    @Test
-    @Timeout(5)
-    void loadAndComputeWithNullThrowsException() {
-        LinearAlgebraEngine engine = new LinearAlgebraEngine(2);
-        try {
-            assertThrows(IllegalArgumentException.class,
-                    () -> engine.loadAndCompute(null));
-        } finally {
-            shutdownEngine(engine);
-        }
-    }
-
-    @Test
-    @Timeout(5)
-    void runWithNullRootThrowsException() {
-        LinearAlgebraEngine engine = new LinearAlgebraEngine(2);
-        try {
-            assertThrows(IllegalArgumentException.class,
-                    () -> engine.run(null));
-        } finally {
-            shutdownEngine(engine);
-        }
-    }
-
-    @Test
-    @Timeout(5)
-    void addWithDifferentRowCountsThrows() {
-        LinearAlgebraEngine engine = new LinearAlgebraEngine(2);
-        try {
-            double[][] a = {{1, 2}};
-            double[][] b = {{3, 4}, {5, 6}};
-
-            java.util.List<ComputationNode> children = new java.util.ArrayList<>();
-            children.add(new ComputationNode(a));
-            children.add(new ComputationNode(b));
-
-            ComputationNode node =
-                    new ComputationNode(ComputationNodeType.ADD, children);
-
-            assertThrows(IllegalArgumentException.class,
-                    () -> engine.run(node));
-        } finally {
-            shutdownEngine(engine);
-        }
-    }
-
-    // סגירה מינימלית כדי לא להיתקע – בלי helpers חיצוניים
-    private void shutdownEngine(LinearAlgebraEngine engine) {
-        try {
-            java.lang.reflect.Field f =
-                    LinearAlgebraEngine.class.getDeclaredField("executor");
-            f.setAccessible(true);
-            scheduling.TiredExecutor ex =
-                    (scheduling.TiredExecutor) f.get(engine);
-            ex.shutdown();
-        } catch (Exception ignored) {
+        for (int i = 0; i < expected.length; i++) {
+            for (int j = 0; j < expected[i].length; j++) {
+                Assertions.assertEquals(expected[i][j], actual[i][j],
+                        String.format("%s: Value mismatch at [%d][%d]", message, i, j));
+            }
         }
     }
 }

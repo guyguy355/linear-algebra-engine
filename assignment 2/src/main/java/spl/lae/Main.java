@@ -10,6 +10,7 @@ public class Main {
             return;
         }
 
+
         int threads;
         try {
             threads = Integer.parseInt(args[0]);
@@ -26,6 +27,7 @@ public class Main {
 
         try {
             InputParser p = new InputParser();
+
             ComputationNode root = p.parse(inFile);
 
             eng = new LinearAlgebraEngine(threads);
@@ -47,9 +49,17 @@ public class Main {
             System.out.println(elapsedMs + " ms");
 
             if (eng != null) {
+                try {
+                    eng.shutdown();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
                 System.out.println("=== Worker Report ===");
                 System.out.println(eng.getWorkerReport());
+
             }
+
         }
     }
 }

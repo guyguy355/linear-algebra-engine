@@ -42,51 +42,44 @@ public class LinearAlgebraEngine {
     }
 
     public void loadAndCompute(ComputationNode node) {
-        if (node == null) {
-            throw new IllegalArgumentException("node is null");
+        if (node.getNodeType() == ComputationNodeType.MATRIX) {
+            return;
+        }
+        for (ComputationNode child : node.getChildren()) {
+            if (child.getNodeType() != ComputationNodeType.MATRIX) {
+                throw new IllegalStateException("Cannot compute node: not all children are resolved.");
+            }
         }
 
-        ComputationNodeType op = node.getNodeType();
+        leftMatrix.loadRowMajor(node.getChildren().get(0).getMatrix());
 
-// load matrices depending on operation
-        if (op == ComputationNodeType.ADD || op == ComputationNodeType.MULTIPLY) {
-            leftMatrix.loadRowMajor(node.getChildren().get(0).getMatrix());
+        if (node.getChildren().size() > 1) {
             rightMatrix.loadRowMajor(node.getChildren().get(1).getMatrix());
-
-        } else if (op == ComputationNodeType.NEGATE) {
-            leftMatrix.loadRowMajor(node.getChildren().get(0).getMatrix());
-
-        } else {
-            // transpose: we want faster access by columns
-            leftMatrix.loadColumnMajor(node.getChildren().get(0).getMatrix());
         }
 
-// run tasks + basic validations
-        if (op == ComputationNodeType.ADD) {
-            if (leftMatrix.length() != rightMatrix.length()) {
-                throw new IllegalArgumentException("The matrices have different length");
-            }
-            executor.submitAll(createAddTasks());
+        List<Runnable> tasks;
+
+        switch (node.getNodeType()) {
+            case ADD:
+                tasks = createAddTasks();
+                break;
+            case MULTIPLY:
+                tasks = createMultiplyTasks();
+                break;
+            case NEGATE:
+                tasks = createNegateTasks();
+                break;
+            case TRANSPOSE:
+                tasks = createTransposeTasks();
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported operation: " + node.getNodeType());
         }
 
-        if (op == ComputationNodeType.MULTIPLY) {
-            if (leftMatrix.get(0).length() != rightMatrix.length()) {
-                throw new IllegalArgumentException(
-                        "The left matrix number of columns is not equal to the right matrix number of rows"
-                );
-            }
-            executor.submitAll(createMultiplyTasks());
+        if (tasks != null && !tasks.isEmpty()) {
+            executor.submitAll(tasks);
+            node.resolve(leftMatrix.readRowMajor());
         }
-
-        if (op == ComputationNodeType.NEGATE) {
-            executor.submitAll(createNegateTasks());
-        }
-
-        if (op == ComputationNodeType.TRANSPOSE) {
-            executor.submitAll(createTransposeTasks());
-        }
-        double[][] result = leftMatrix.readRowMajor();
-        node.resolve(result);
 
     }
 
@@ -148,25 +141,22 @@ public class LinearAlgebraEngine {
     }
 
     public List<Runnable> createTransposeTasks() {
-        List<Runnable> tasks = new java.util.ArrayList<>();
-        int rows = leftMatrix.length();
-
-        for (int i = 0; i < rows; i++) {
-            final int r = i;
-
-            tasks.add(() -> {
-                try {
-                    leftMatrix.get(r).transpose();
-                } catch (Exception ex) {
-                    throw new IllegalArgumentException(ex);
-                }
-            });
+        List<Runnable> tasks = new java.util.LinkedList<>();
+        for (int i = 0; i < leftMatrix.length(); i++) {
+            SharedVector vLeft = leftMatrix.get(i);
+            tasks.add(() -> vLeft.transpose());
         }
-
         return tasks;
     }
 
     public String getWorkerReport() {
         return executor.getWorkerReport();
     }
+    public void shutdown() throws InterruptedException {
+        if (executor != null) {
+            executor.shutdown();
+        }
+    }
+
+
 }
