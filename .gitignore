@@ -6,3 +6,5 @@ target/
 results/
 release/*.jar
 result.json
+
+docs/INTERVIEW_HE.md

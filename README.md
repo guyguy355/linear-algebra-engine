@@ -99,7 +99,7 @@ flowchart TD
 - **Memory:** vectors own their arrays; locks use `try/finally`. Reciprocal additions acquire locks in a stable order. Multiplication shares one read-only right-matrix snapshot across row tasks, avoiding per-scalar locking in the arithmetic loop.
 - **Lifecycle:** `AutoCloseable` supports reliable cleanup. Shutdown stops acceptance, drains work, and joins workers. Interrupted callers retain their interrupt status; accepted work drains before failure is reported.
 
-See [architecture](docs/ARCHITECTURE.md), [changes](docs/CHANGES.md), and the [Hebrew interview guide](docs/INTERVIEW_HE.md).
+See [architecture](docs/ARCHITECTURE.md), [changes](docs/CHANGES.md).
 
 ## Tests
 
