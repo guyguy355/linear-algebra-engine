@@ -1,0 +1,37 @@
+{
+  "size" : 128,
+  "repetitions" : 5,
+  "warmups" : 3,
+  "seed" : 42,
+  "javaVersion" : "17.0.20",
+  "processors" : 8,
+  "samples" : [ {
+    "mode" : "serial",
+    "workers" : 0,
+    "medianMs" : 1.651133,
+    "speedup" : 1.0,
+    "maxError" : 0.0,
+    "workerReport" : "Direct triple-loop kernel"
+  }, {
+    "mode" : "engine",
+    "workers" : 1,
+    "medianMs" : 4.849334,
+    "speedup" : 0.34048654928697425,
+    "maxError" : 0.0,
+    "workerReport" : "Worker 0 | busy=false | tasks=1024 | failed=0 | timeUsed(ns)=13307829 | timeIdle(ns)=131234987 | fatigue=1.6336207540488124E7\n"
+  }, {
+    "mode" : "engine",
+    "workers" : 2,
+    "medianMs" : 3.679787,
+    "speedup" : 0.44870341680102677,
+    "maxError" : 0.0,
+    "workerReport" : "Worker 0 | busy=false | tasks=621 | failed=0 | timeUsed(ns)=21109260 | timeIdle(ns)=125666475 | fatigue=2.5912960888370622E7\nWorker 1 | busy=false | tasks=403 | failed=0 | timeUsed(ns)=17694609 | timeIdle(ns)=129034514 | fatigue=2.0936676692413006E7\n"
+  }, {
+    "mode" : "engine",
+    "workers" : 4,
+    "medianMs" : 3.684504,
+    "speedup" : 0.44812897475481095,
+    "maxError" : 0.0,
+    "workerReport" : "Worker 0 | busy=false | tasks=255 | failed=0 | timeUsed(ns)=3300721 | timeIdle(ns)=150973251 | fatigue=4051845.2175217685\nWorker 1 | busy=false | tasks=246 | failed=0 | timeUsed(ns)=3362847 | timeIdle(ns)=152234488 | fatigue=3978999.5023371805\nWorker 2 | busy=false | tasks=264 | failed=0 | timeUsed(ns)=4458869 | timeIdle(ns)=146036020 | fatigue=3605974.1090796813\nWorker 3 | busy=false | tasks=259 | failed=0 | timeUsed(ns)=4781719 | timeIdle(ns)=144338408 | fatigue=3715770.9804788106\n"
+  } ]
+}

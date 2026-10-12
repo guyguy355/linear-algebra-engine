@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MatrixLab | Matrix Race</title><style>
+body{background:#101827;color:#e9eff7;font:16px system-ui;margin:0;padding:6vw}main{max-width:1000px;margin:auto}
+h1{font-size:clamp(36px,6vw,64px);margin:12px 0} .eyebrow{color:#63ded2;letter-spacing:.16em;font-size:12px}
+p{color:#b4c2d4;line-height:1.7}table{width:100%;border-collapse:collapse;margin:32px 0}th,td{text-align:left;padding:18px 12px;border-bottom:1px solid #354257}
+th{color:#a5b5c9}td:nth-child(3){width:40%}.bar{height:5px;background:#63ded2;margin-bottom:9px;border-radius:3px}
+details{padding:16px;background:#1b283b;margin:10px 0;border-radius:8px}pre{overflow:auto;font-size:12px;line-height:1.7}
+.note{font-size:14px}a{color:#63ded2}</style><main><div class="eyebrow">MATRIXLAB / PERFORMANCE EXPLORER</div>
+<h1>Matrix Race</h1>
+<p>128 × 128 matrix multiplication · 5 measured runs · 3 warmups · seed 42</p><p>Median duration: shorter bars are better. A speedup below 1 means the engine was slower than the direct serial kernel.</p><table><thead><tr><th>Mode</th><th>Workers</th><th>Median runtime</th><th>Speedup</th><th>Correctness</th></tr></thead><tbody><tr><td>serial</td><td>0</td><td><div class='bar' style='width:34.05%'></div>1.651 ms</td><td>1.00x</td><td>Verified</td></tr><tr><td>engine</td><td>1</td><td><div class='bar' style='width:100.00%'></div>4.849 ms</td><td>0.34x</td><td>Verified</td></tr><tr><td>engine</td><td>2</td><td><div class='bar' style='width:75.88%'></div>3.680 ms</td><td>0.45x</td><td>Verified</td></tr><tr><td>engine</td><td>4</td><td><div class='bar' style='width:75.98%'></div>3.685 ms</td><td>0.45x</td><td>Verified</td></tr></tbody></table><details><summary>1 workers: task distribution</summary><pre>Worker 0 | busy=false | tasks=1024 | failed=0 | timeUsed(ns)=13307829 | timeIdle(ns)=131234987 | fatigue=1.6336207540488124E7
+</pre></details><details><summary>2 workers: task distribution</summary><pre>Worker 0 | busy=false | tasks=621 | failed=0 | timeUsed(ns)=21109260 | timeIdle(ns)=125666475 | fatigue=2.5912960888370622E7
+Worker 1 | busy=false | tasks=403 | failed=0 | timeUsed(ns)=17694609 | timeIdle(ns)=129034514 | fatigue=2.0936676692413006E7
+</pre></details><details><summary>4 workers: task distribution</summary><pre>Worker 0 | busy=false | tasks=255 | failed=0 | timeUsed(ns)=3300721 | timeIdle(ns)=150973251 | fatigue=4051845.2175217685
+Worker 1 | busy=false | tasks=246 | failed=0 | timeUsed(ns)=3362847 | timeIdle(ns)=152234488 | fatigue=3978999.5023371805
+Worker 2 | busy=false | tasks=264 | failed=0 | timeUsed(ns)=4458869 | timeIdle(ns)=146036020 | fatigue=3605974.1090796813
+Worker 3 | busy=false | tasks=259 | failed=0 | timeUsed(ns)=4781719 | timeIdle(ns)=144338408 | fatigue=3715770.9804788106
+</pre></details><p class='note'>Task counts include warmups. Inputs and measurement order are seeded; scheduling and timing are not deterministic. All measured outputs were checked against the serial reference. Engine timing includes validation, matrix copies, synchronization, scheduling and output assembly. Worker startup, numerical verification and file writes are excluded. Results describe this machine and workload; this is an educational experiment, not a JMH benchmark or a claim of universal speedup.</p></main></html>

@@ -1,0 +1,5 @@
+mode,workers,median_ms,speedup_vs_serial,max_absolute_error
+serial,0,1.651133,1.0000,0.00000000000
+engine,1,4.849334,0.3405,0.00000000000
+engine,2,3.679787,0.4487,0.00000000000
+engine,4,3.684504,0.4481,0.00000000000
